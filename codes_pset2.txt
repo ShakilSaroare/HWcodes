@@ -1,0 +1,61 @@
+## Problem-1
+dat<-read.csv("bwght2.csv", header=T)###Reading data
+head(dat)
+
+data<-na.omit(dat)###omitting missing observations
+dim(data)
+
+X1<-as.matrix(data[,"magesq"])
+X2<-as.matrix(data[,"npvissq"])
+X<-as.matrix(cbind(X1,X2))
+rownames(X)<-NULL
+Y<-data[,"lbwght"]
+##a.
+beta1<-solve(t(X)%*%X)%*%(t(X)%*%Y)##big multiple regression of Yi on X1i,X2i
+##b. Two part regression
+bx<-solve(t(X2)%*%X2)%*%(t(X2)%*%X1)##Regressing X1i on X2i
+x1.tilda<-X1-X2%*%bx##calculating residual X1i.tilda
+by<-solve(t(X2)%*%X2)%*%(t(X2)%*%Y)##Regressing Yi on X2i
+y.tilda<-Y-X2%*%by##calculating residual Yi.tilda
+##Regressing Yi.tilda on X1i.tilda
+beta1.tilda<-solve(t(x1.tilda)%*%x1.tilda)%*%(t(x1.tilda)%*%y.tilda)
+beta1.tilda
+beta1[1]
+##c. Regressing Yi on X1i.tilda
+bxy<-solve(t(x1.tilda)%*%x1.tilda)%*%(t(x1.tilda)%*%Y)
+bxy
+
+##Problem-2
+install.packages("AER")##Installing AER package in R
+library(AER)##loading "AER"
+data("CigarettesSW")##Calling a panel dataset CigarettesSW
+data<-CigarettesSW
+
+X<-as.matrix(cbind(data[,"price"]/data[,"cpi"],data[,"income"]/
+               (data[,"population"]*data[,"cpi"])))
+Y<-data[,"packs"]/data[,"cpi"]
+Z<-(data[,"taxs"]-data[,"tax"])/data[,"cpi"]
+ZX<-as.matrix(cbind(Z,X[,2]))
+##a.
+iv.est<-solve(t(ZX)%*%X)%*%(t(ZX)%*%Y)##GMM estimate of IV
+##b. Two staged least square
+a<-solve(t(ZX)%*%ZX)%*%(t(ZX)%*%X[,1])#first stage
+pred<-ZX%*%a#forming predicted value
+p.X<-as.matrix(cbind(pred,X[,2]))#forming data matrix with instruments
+s2ls.est<-solve(t(p.X)%*%p.X)%*%(t(p.X)%*%Y)
+##c. ratio of reduced form
+a<-solve(t(ZX)%*%ZX)%*%(t(ZX)%*%X[,1])##reduced form of treatment
+b<-solve(t(ZX)%*%ZX)%*%(t(ZX)%*%Y)##reduced form of outcome
+ratio.est<-b[1]/a[1]
+##d. ratio of the covarinaces
+b.zx<-solve(t(X[,2])%*%X[,2])%*%(t(X[,2])%*%Z)
+b.yx<-solve(t(X[,2])%*%X[,2])%*%(t(X[,2])%*%Y)
+b.tx<-solve(t(X[,2])%*%X[,2])%*%(t(X[,2])%*%X[,1])
+Z.tilda<-Z-X[,2]%*%b.zx
+Y.tilda<-Y-X[,2]%*%b.yx
+T.tilda<-X[,1]-X[,2]%*%b.tx
+rcov.est<-cov(Z.tilda,Y.tilda)/cov(Z.tilda,T.tilda)
+iv.est
+s2ls.est
+ratio.est
+rcov.est
