@@ -1,0 +1,42 @@
+#Macro_HW_3_coding   ##Golam Saroare Shakil
+#############################################
+
+
+A<-1          #technology parameter
+alpha<-0.36       #Cobb-Dauglas parameter
+beta<-0.9         #Saving fraction
+kss<-(alpha*beta)^(1/(1-alpha))         #Steady state capital stock
+k1bar<-0.95*kss
+k2bar<-1.05*kss
+v<-c(0,0)    #initializing value function
+a<-log(A*k1bar^alpha-k1bar)+beta*v1
+b<-log(A*k1bar^alpha-k2bar)+beta*v1
+c<-log(A*k2bar^alpha-k1bar)+beta*v2
+d<-log(A*k2bar^alpha-k2bar)+beta*v2
+utilitf<-matrix(c(a,b,c,d), byrow=T, nrow=2)
+tv<-c(0,0)
+
+
+crit<-10^-6
+l<-1
+j<-1
+for(i in 1:2){
+while(l>crit){
+tv[i]<- max(utilitf[i,])
+l<-abs(tv[i]-v[i])
+v[i]<-tv[i]
+a<-log(A*k1bar^alpha-k1bar)+beta*v[i]
+b<-log(A*k1bar^alpha-k2bar)+beta*v[i]
+utilitf[i,]<-matrix(c(a,b), byrow=T)
+}
+l<-1
+while(l>crit){
+tv[i]<- max(utilitf[i,])
+l<-abs(tv[i]-v[i])
+v[i]<-tv[i]
+c<-log(A*k2bar^alpha-k1bar)+beta*v[i]
+d<-log(A*k2bar^alpha-k2bar)+beta*v[i]
+utilitf[i,]<-matrix(c(c,d), byrow=T)}
+}
+
+
