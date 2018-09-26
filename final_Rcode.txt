@@ -1,0 +1,41 @@
+dat<-read.csv("final.csv",header=F)[,-c(1,2)]
+Q<-read.csv("final.csv",header=F)[,2]
+dat<-data.frame(dat[,1],dat[,2]/dat[,6],dat[,3]/dat[,6],dat[,4]/dat[,6],dat[,5]/dat[,6],dat[,7]/dat[,6])
+colnames(dat)<-c("y","p11","p2","p3","p4","inc")
+mod<-lm(y~p11+p2+p3+p4+inc, data=dat)
+summary(mod)
+###creating dummy variables
+d1<-rep(0,64)
+for (i in 1:64){
+if (Q[i]==1){d1[i]=1}} 
+d2<-rep(0,64)
+for (i in 1:64){
+if (Q[i]==2){d2[i]=1}} 
+d3<-rep(0,64)
+for (i in 1:64){
+if (Q[i]==3){d3[i]=1}} 
+dat<-data.frame(dat,d1,d2,d3)
+colnames(dat)<-c("y","p11","p2","p3","p4","inc","qrt1","qrt2","qrt3")
+###OLS with transformed model
+mod1<-lm(y~p11+p2+p3+p4+inc+qrt1+qrt2+qrt3,data=dat)
+summary(mod)
+###GLS with Transformed model
+library(nlme)
+mod2<-gls(y~p11+p2+p3+p4+inc+qrt1+qrt2+qrt3,data=dat)
+summary(mod2)
+res=resid(mod2)
+###Durbin-Watson test statistic
+e1=res[2:64];
+en=res[1:64-1];
+durb=t((e1-en))%*%(e1-en)/(t(res)%*%res)
+durb
+###Prais-Winsten for Transformed model
+library(prais)
+mod3<-prais.winsten(y~p11+p2+p3+p4+inc+qrt1+qrt2+qrt3,data=dat)
+mod3
+###Durbin-Watson test statistic
+res=resid(mod3[[1]])
+e1=res[2:64];
+en=res[1:64-1];
+durb=t((e1-en))%*%(e1-en)/(t(res)%*%res)
+durb

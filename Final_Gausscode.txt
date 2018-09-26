@@ -1,0 +1,322 @@
+load data[64,9]=final.csv;
+output file=C:\Users\lg\Desktop\final.txt reset;
+
+Q=data[.,3];
+p1=data[.,4];
+p2=data[.,5];
+p3=data[.,6];
+p4=data[.,7];
+cpi=data[.,8];
+inc=data[.,9];
+
+@Descriptive Statistics@
+
+d=Q~p1~p2~p3~p4~cpi~inc;
+d1=minc(d);
+d2=meanc(d);
+d3=stdc(d);
+d4=maxc(d);
+names =  "Consumption" | "Good1_pr" | "Good2_pr" | "Good3_pr" | "Good4_pr" | "CPI" | "Income";
+result1 = names ~ d1 ~ d2 ~d3 ~ d4;
+"(a)                       DESCRIPTIVE STATISTICS";
+" -------------------------------------------------------------------------";
+"         VARIABLE       MINIMUM      MEAN      STD DEV.     MAXIMUM";
+" -------------------------------------------------------------------------";
+call printfm(result1,0~ones(1,4),"s"~17~12|"lf"~14~4|"lf"~12~4|"lf"~12~4|"lf"~14~4);
+" -------------------------------------------------------------------------";
+print;
+
+@OLS estimation@
+
+n=rows(Q);
+x=ones(n,1)~(p1./cpi)~(p2./cpi)~(p3./cpi)~(p4./cpi)~(inc./cpi);
+bhat=invpd(x'x)*x'Q;
+s2hat=(Q-x*bhat)'*(Q-x*bhat)/(n-cols(x));
+covmat=s2hat*invpd(x'x);
+stder=sqrt(diag(covmat));
+tval=bhat./stder;
+k=cols(x);
+pval=2*cdftc(abs(tval),n-k);
+yhat=x*bhat;
+res=Q-yhat;
+ssr=yhat'yhat-n*meanc(yhat)^2;
+sst=Q'Q-n*meanc(Q)^2;
+r2=ssr/sst;
+adjR2=1-(1-r2)*((n-1)/(n-k));
+name = 0 $+ "Beta" $+ ftocv(seqa(0,1,cols(x)),1,0);
+result = name~bhat~stder~tval~pval;
+
+"(b)                        OLS ESTIMATION";
+" -------------------------------------------------------------------------";
+"           PARAMETER    ESTIMATE       S.E.     T-RATIO        P-value";
+" -------------------------------------------------------------------------";
+call printfm(result,0~ones(1,4),"s"~17~8|"lf"~14~4|"lf"~12~4|"lf"~12~4|"lf"~14~4);
+" -------------------------------------------------------------------------";
+format /rd 9,4;
+"                     ADJ. R SQUARE " adjR2;
+" -------------------------------------------------------------------------";
+print;
+
+@Constrcting restrictions@
+let c[4,6]=0 1 0 0 0 0
+           0 0 1 0 0 0
+           0 0 0 1 0 0
+           0 0 0 0 1 0;
+r= zeros(rows(c),1);
+
+@Calculating Wald Statictics@
+w=(c*bhat-r)'invpd(s2hat*c*invpd(x'x)*c')*(c*bhat-r);
+print ("(c) Wald statistic: ",w);
+cr=cdfchii(1-.05,rows(c));
+print ("Chi-Sq critical value: ", cr);
+print;
+
+@Calculating Lagrange multiplier statistics@
+xr=ones(n,1)~(inc./cpi);
+bhatr=invpd(xr'xr)*xr'Q;
+s2hatr=(Q-xr*bhatr)'*(Q-xr*bhatr)/(n-cols(xr));
+covr=s2hatr*invpd(x'x);
+LM=(c*bhat-r)'invpd(c*covr*c')*(c*bhat-r);
+print ("LM statistic: ",LM);
+cr=cdfchii(1-.05, rows(c));
+print ("Chi-Sq critical value: ", cr);
+print;
+
+@Calculating Likelihood ratio statistics@
+lrh0=-(n/2)*ln(2*pi)-(n/2)*ln(s2hatr)-(1/(2*s2hatr))*((Q-xr*bhatr)'(Q-xr*bhatr));
+lrha=-(n/2)*ln(2*pi)-(n/2)*ln(s2hat)-(1/(2*s2hat))*((Q-x*bhat)'(Q-x*bhat));
+lr=-2*(lrh0-lrha);
+print ("LR statistic: ",LR);
+cr=cdfchii(1-.05, rows(c));
+print ("Chi-Sq critical value: ", cr);
+print;
+
+@Confidence interval for @
+u=bhat[2]+sqrt(covmat[2,2])*cdftci(0.05/2,n-k);
+l=bhat[2]-sqrt(covmat[2,2])*cdftci(0.05/2,n-k);
+
+print;
+
+print ("(d) 95% Confidence Interval for own-price coefficient", u, l);
+print;
+
+
+@Testing Heteroskedasticity@
+
+@BP test@
+w = res^2./meanc(res^2);
+s_bp = (w - 1)'x*invpd(x'x)*x'(w - 1)/((w - 1)'(w - 1)/n);
+cr=cdfchii(1-0.05,cols(x)-1);
+
+print ("(e) Breusch-Pagan statistic: ",s_bp);
+print ("Chi-Sq Critical Value: ",cr);
+print;
+
+@GQ test@
+dat=Q~x;
+dats=sortc(dat,1);
+gy1=dats[1:32,1];
+gx1=dats[1:32,2:6];
+gy2=dats[33:64,1];
+gx2=dats[33:64,2:6];
+ge1=gy1-gx1*invpd(gx1'gx1)*(gx1'gy1);
+ge2=gy2-gx2*invpd(gx2'gx2)*(gx2'gy2);
+gq=((ge1'ge1)/(rows(gy1)-k))/((ge2'ge2)/(rows(gy2)-k));
+pvalgq=cdffc(gq,rows(gy1)-k,rows(gy2)-k);
+
+print (" Goldfeld-Quandt statistic: ", gq);
+print ("P value: ", pvalgq);
+print;
+
+@Autocorrelation test@
+
+@DW test@
+e1=res[2:n];
+en=res[1:n-1];
+durb=(e1-en)'(e1-en)/(res'res);
+print;
+print ("(f) Durbin-Watson test statistic:", durb);
+print;
+
+@BG test oreder 1@
+x0 = x[2:64,.]~res[1:63];
+y0 = res[2:64];
+e0 = y0 - x0*invpd(x0'x0)*x0'y0;
+tss0 = (y0 - meanc(y0))'(y0 - meanc(y0));
+rss0 = e0'e0;
+r2 = (tss0 - rss0)/tss0;
+s_bg = n*r2;
+cr_bg=cdfchii(1-.05, 1);
+print;
+print ("Breusch-Godfrey test statistic for order 1:", s_bg);
+print ("Chi-Sq Critical Value: ",cr_bg);
+print;
+
+@BG test oreder 2@
+x0 = x[3:64,.]~res[2:63]~res[1:62];
+y0 = res[3:64];
+e0 = y0 - x0*invpd(x0'x0)*x0'y0;
+tss0 = (y0 - meanc(y0))'(y0 - meanc(y0));
+rss0 = e0'e0;
+r2 = (tss0 - rss0)/tss0;
+s_bg = n*r2;
+cr_bg=cdfchii(1-.05, 2);
+print;
+print ("Breusch-Godfrey test statistic for order 2:", s_bg);
+print ("Chi-Sq Critical Value: ", cr_bg);
+print;
+
+
+eb=invpd(en'en)*(en'e1);
+
+xt=x[1:n-1, 2:6];
+xs=ones(n-1,1)~x[2:n, 2:6]-eb.*xt;
+yt=Q[1:n-1,.];
+ys=Q[2:n,.]-eb.*yt;
+bhats=inv(xs'xs)*xs'ys;
+s2hats=(ys-xs*bhats)'*(ys-xs*bhats)/(n-1-cols(xs));
+covmats=s2hats*inv(xs'xs);
+stders=sqrt(diag(covmats));
+tvals=bhats ./stders;
+k=cols(xs);
+pvals=2*cdftc(abs(tvals),n-1-k);
+yhats=xs*bhats;
+ress=ys-yhats;
+ssrs=yhats'yhats-(n-1)*meanc(yhats)^2;
+ssts=ys'ys-(n-1)*meanc(ys)^2;
+r2s=ssrs/ssts;
+adjR2s=1-(1-r2s)*((n-2)/(n-1-k));
+name = 0 $+ "Beta" $+ ftocv(seqa(0,1,cols(x)),1,0);
+result = name~bhats~stders~tvals~pvals;
+
+"                 OLS ESTIMATION IN TWO STEPS";
+" -------------------------------------------------------------------------";
+"           PARAMETER    ESTIMATE       S.E.     T-RATIO        P-value";
+" -------------------------------------------------------------------------";
+call printfm(result,0~ones(1,4),"s"~17~8|"lf"~14~4|"lf"~12~4|"lf"~12~4|"lf"~14~4);
+" -------------------------------------------------------------------------";
+format /rd 9,4;
+"                     ADJ. R SQUARE " adjR2s;
+" -------------------------------------------------------------------------";
+e1s=ress[2:n-1];
+ens=ress[1:n-2];
+durbs=(e1s-ens)'(e1s-ens)/(ress'ress);
+print;
+print ("Durbin-Watson test statistic:", durbs);
+
+D1=zeros(64,1);
+D2=zeros(64,1);
+D3=zeros(64,1);
+D4=zeros(64,1);
+
+for  i(1,64,1);
+    if data[i,2]==1; 
+        D1[i]=1;
+        else;
+            D1[i]=0;
+            endif;
+endfor;
+
+for i(1,64,1);
+    if data[i,2]==2; 
+        D2[i]=1;
+        else;
+            D2[i]=0;
+            endif;
+endfor;
+
+for i(1,64,1);
+    if data[i,2]==3; 
+        D3[i]=1;
+        else;
+            D3[i]=0;
+            endif;
+endfor;
+
+
+x=x~D1~D2~D3;
+bhat=invpd(x'x)*x'Q;
+s2hat=(Q-x*bhat)'*(Q-x*bhat)/(n-cols(x));
+covmat=s2hat*invpd(x'x);
+stder=sqrt(diag(covmat));
+tval=bhat./stder;
+k=cols(x);
+pval=2*cdftc(abs(tval),n-k);
+yhat=x*bhat;
+res=Q-yhat;
+ssr=yhat'yhat-n*meanc(yhat)^2;
+sst=Q'Q-n*meanc(Q)^2;
+r2=ssr/sst;
+adjR2=1-(1-r2)*((n-1)/(n-k));
+name = 0 $+ "Beta" $+ ftocv(seqa(0,1,cols(x)),1,0);
+result = name~bhat~stder~tval~pval;
+print;
+"(G)                OLS ESTIMATION OF TRANSFORMED MODEL";
+" -------------------------------------------------------------------------";
+"           PARAMETER    ESTIMATE       S.E.     T-RATIO        P-value";
+" -------------------------------------------------------------------------";
+call printfm(result,0~ones(1,4),"s"~17~8|"lf"~14~4|"lf"~12~4|"lf"~12~4|"lf"~14~4);
+" -------------------------------------------------------------------------";
+format /rd 9,4;
+"                     ADJ. R SQUARE " adjR2;
+" -------------------------------------------------------------------------";
+print;
+
+w = res^2./meanc(res^2);
+s_bp = (w - 1)'x*invpd(x'x)*x'(w - 1)/((w - 1)'(w - 1)/n);
+cr=cdfchii(1-0.05,cols(x)-1);
+
+print ("Breusch-Pagan statistic for transformed model: ",s_bp);
+print ("Chi-Sq Critical Value: ",cr);
+print;
+
+dat=Q~x;
+dats=sortc(dat,1);
+gy1=dats[1:32,1];
+gx1=dats[1:32,2:6];
+gy2=dats[33:64,1];
+gx2=dats[33:64,2:6];
+ge1=gy1-gx1*invpd(gx1'gx1)*(gx1'gy1);
+ge2=gy2-gx2*invpd(gx2'gx2)*(gx2'gy2);
+gq=((ge1'ge1)/(rows(gy1)-k))/((ge2'ge2)/(rows(gy2)-k));
+pvalgq=cdffc(gq,rows(gy1)-k,rows(gy2)-k);
+
+print (" Goldfeld-Quandt statistic for transformed model: ", gq);
+print ("P value: ", pvalgq);
+print;
+
+e1=res[2:n];
+en=res[1:n-1];
+durb=(e1-en)'(e1-en)/(res'res);
+print;
+print ("Durbin-Watson test statistic for transformed model:", durb);
+print;
+
+
+x0 = x[2:64,.]~res[1:63];
+y0 = res[2:64];
+e0 = y0 - x0*invpd(x0'x0)*x0'y0;
+tss0 = (y0 - meanc(y0))'(y0 - meanc(y0));
+rss0 = e0'e0;
+r2 = (tss0 - rss0)/tss0;
+s_bg = n*r2;
+cr_bg=cdfchii(1-.05, 1);
+print;
+print ("Breusch-Godfrey test statistic for order 1 for transformed model:", s_bg);
+print ("Chi-Sq Critical Value: ",cr_bg);
+print;
+
+x0 = x[3:64,.]~res[2:63]~res[1:62];
+y0 = res[3:64];
+e0 = y0 - x0*invpd(x0'x0)*x0'y0;
+tss0 = (y0 - meanc(y0))'(y0 - meanc(y0));
+rss0 = e0'e0;
+r2 = (tss0 - rss0)/tss0;
+s_bg = n*r2;
+cr_bg=cdfchii(1-.05, 2);
+print;
+print ("Breusch-Godfrey test statistic for order 2 for transformed model:", s_bg);
+print ("Chi-Sq Critical Value: ", cr_bg);
+print;
+
+
