@@ -1,0 +1,133 @@
+(a)                       DESCRIPTIVE STATISTICS
+ -------------------------------------------------------------------------
+         VARIABLE       MINIMUM      MEAN      STD DEV.     MAXIMUM
+ -------------------------------------------------------------------------
+         Consumpt       15.9000     17.8781      1.4012       20.8000
+         Good1_pr      222.7000    262.0063     24.5684      300.4000
+         Good2_pr      158.6000    193.3781     24.0428      248.1000
+         Good3_pr       69.1000     85.9437      8.6298      101.1000
+         Good4_pr       90.8000     99.9031      4.8460      109.0000
+              CPI       94.5000    127.6672     20.8825      161.5000
+           Income     9897.0000  15959.0469   3556.4570    21871.0000
+ -------------------------------------------------------------------------
+
+(b)                        OLS ESTIMATION
+ -------------------------------------------------------------------------
+           PARAMETER    ESTIMATE       S.E.     T-RATIO        P-value
+ -------------------------------------------------------------------------
+            Beta0       30.1500      4.9787      6.0557        0.0000
+            Beta1       -4.1726      0.8535     -4.8887        0.0000
+            Beta2       -0.1245      0.6478     -0.1922        0.8483
+            Beta3        2.8268      1.9605      1.4419        0.1547
+            Beta4        8.2073      1.4806      5.5432        0.0000
+            Beta5       -0.0962      0.0252     -3.8113        0.0003
+ -------------------------------------------------------------------------
+                     ADJ. R SQUARE    0.8552 
+ -------------------------------------------------------------------------
+
+(c) Wald statistic: 
+ 115.0834 
+Chi-Sq critical value: 
+   9.4877 
+
+LM statistic: 
+  41.2239 
+Chi-Sq critical value: 
+   9.4877 
+
+LR statistic: 
+  69.7049 
+Chi-Sq critical value: 
+   9.4877 
+
+
+(d) 95% Confidence Interval for own-price coefficient
+  -2.4641 
+  -5.8810 
+
+(e) Breusch-Pagan statistic: 
+   4.2727 
+Chi-Sq Critical Value: 
+  11.0705 
+
+ Goldfeld-Quandt statistic: 
+   0.2840 
+P value: 
+   0.9990 
+
+
+(f) Durbin-Watson test statistic:
+   1.6478 
+
+
+Breusch-Godfrey test statistic for order 1:
+   2.0324 
+Chi-Sq Critical Value: 
+   3.8415 
+
+
+Breusch-Godfrey test statistic for order 2:
+  20.0773 
+Chi-Sq Critical Value: 
+   5.9915 
+
+                 OLS ESTIMATION IN TWO STEPS
+ -------------------------------------------------------------------------
+           PARAMETER    ESTIMATE       S.E.     T-RATIO        P-value
+ -------------------------------------------------------------------------
+            Beta0       26.6153      4.7198      5.6391        0.0000
+            Beta1       -4.1575      0.9307     -4.4671        0.0000
+            Beta2       -0.1879      0.7173     -0.2620        0.7943
+            Beta3        2.9746      2.0915      1.4222        0.1604
+            Beta4        7.9891      1.6280      4.9073        0.0000
+            Beta5       -0.1038      0.0283     -3.6663        0.0005
+ -------------------------------------------------------------------------
+                     ADJ. R SQUARE    0.8255 
+ -------------------------------------------------------------------------
+
+Durbin-Watson test statistic:
+   1.8715 
+
+(G)                OLS ESTIMATION OF TRANSFORMED MODEL
+ -------------------------------------------------------------------------
+           PARAMETER    ESTIMATE       S.E.     T-RATIO        P-value
+ -------------------------------------------------------------------------
+            Beta0       32.3625      3.5262      9.1776        0.0000
+            Beta1       -4.3656      0.6160     -7.0876        0.0000
+            Beta2       -0.1511      0.4622     -0.3270        0.7449
+            Beta3        3.0031      1.3916      2.1581        0.0353
+            Beta4        7.4466      1.0522      7.0769        0.0000
+            Beta5       -0.1091      0.0179     -6.0821        0.0000
+            Beta6       -0.1132      0.1344     -0.8426        0.4031
+            Beta7        0.5961      0.1367      4.3609        0.0001
+            Beta8        0.7545      0.1341      5.6258        0.0000
+ -------------------------------------------------------------------------
+                     ADJ. R SQUARE    0.9283 
+ -------------------------------------------------------------------------
+
+Breusch-Pagan statistic for transformed model: 
+   6.4362 
+Chi-Sq Critical Value: 
+  15.5073 
+
+ Goldfeld-Quandt statistic for transformed model: 
+   0.2840 
+P value: 
+   0.9981 
+
+
+Durbin-Watson test statistic for transformed model:
+   1.2660 
+
+
+Breusch-Godfrey test statistic for order 1 for transformed model:
+   9.3620 
+Chi-Sq Critical Value: 
+   3.8415 
+
+
+Breusch-Godfrey test statistic for order 2 for transformed model:
+   9.1542 
+Chi-Sq Critical Value: 
+   5.9915 
+
