@@ -1,0 +1,36 @@
+#Answer to a.
+
+dat<-read.csv("HW2_2018.csv",header=T)
+data<-data.frame(Quantity_maize=dat[,"Quantity_maize"], Price_maize=dat[,"Price_maize"],Expenditure=dat[,"Expenditure"]) 
+Minimum<-apply(data,2,min)
+Maximum<-apply(data,2,max)
+Mean<-apply(data,2,mean)
+Std_dev<-sqrt(apply(data,2,var))
+descriptive_statistics<-list(Minimum=Minimum,Maximum=Maximum,Mean=Mean,Std_dev=Std_dev)
+descriptive_statistics
+
+#Answer to b.
+
+Quantity_maize<-data[,"Quantity_maize"]
+Price_maize=data[,"Price_maize"]
+Expenditure=data[,"Expenditure"]
+model<-lm(Quantity_maize~Price_maize+Expenditure)
+summary(model)
+
+#Answer to d.
+
+price_elasticity<- Price_maize*coef(model)[2]
+price_dist<-summary(price_elasticity)
+price_dist
+income_elasticity<- Expenditure*coef(model)[3]
+income_dist<-summary(income_elasticity)
+income_dist
+
+#Answer to e.
+
+price_elasticity_at_mean<-mean(Price_maize)*coef(model)[2]
+price_elasticity_at_mean
+income_elasticity_at_mean<- mean(Expenditure)*coef(model)[3]
+income_elasticity_at_mean
+
+
