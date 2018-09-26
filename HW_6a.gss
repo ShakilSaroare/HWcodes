@@ -1,0 +1,122 @@
+load data[72,5]=HW6a.csv;
+output file=C:\Users\lg\Desktop\HW6a.txt reset;
+Q=data[.,1];
+Age=data[.,2];
+Dm=data[.,3];
+Inc=data[.,4];
+Inc_sq=data[.,5];
+
+d=Q~Age~Dm~Inc~Inc_sq;
+d1=minc(d);
+d2=meanc(d);
+d3=stdc(d);
+d4=maxc(d);
+names =  "Expenditure" | "Age" | "Dummy" | "Income" | "Income Squared";
+result1 = names ~ d1 ~ d2 ~d3 ~ d4;
+"(a)                       DESCRIPTIVE STATISTICS";
+" -------------------------------------------------------------------------";
+"         VARIABLE       MINIMUM      MEAN      STD DEV.     MAXIMUM";
+" -------------------------------------------------------------------------";
+call printfm(result1,0~ones(1,4),"s"~17~12|"lf"~14~4|"lf"~12~4|"lf"~12~4|"lf"~14~4);
+" -------------------------------------------------------------------------";
+print;
+
+n=rows(Q);
+x=ones(n,1)~Age~Dm~Inc~Inc_sq;
+bhat=invpd(x'x)*x'Q;
+s2hat=(Q-x*bhat)'*(Q-x*bhat)/(n-cols(x));
+covmat=s2hat*invpd(x'x);
+stder=sqrt(diag(covmat));
+tval=bhat./stder;
+k=cols(x);
+pval=2*cdftc(abs(tval),n-k);
+yhat=x*bhat;
+res=Q-yhat;
+ssr=yhat'yhat-n*meanc(yhat)^2;
+sst=Q'Q-n*meanc(Q)^2;
+r2=ssr/sst;
+adjR2=1-(1-r2)*((n-1)/(n-k));
+name = 0 $+ "Beta" $+ ftocv(seqa(1,1,cols(x)),1,0);
+result = name~bhat~stder~tval~pval;
+
+"(b)                        OLS ESTIMATION";
+" -------------------------------------------------------------------------";
+"           PARAMETER    ESTIMATE       S.E.     T-RATIO        P-value";
+" -------------------------------------------------------------------------";
+call printfm(result,0~ones(1,4),"s"~17~8|"lf"~14~4|"lf"~12~4|"lf"~12~4|"lf"~14~4);
+" -------------------------------------------------------------------------";
+format /rd 9,4;
+"                     ADJ. R SQUARE " adjR2;
+" -------------------------------------------------------------------------";
+
+
+u=bhat[2]+sqrt(covmat[2,2])*cdftci(0.05,n-k);
+l=bhat[2]-sqrt(covmat[2,2])*cdftci(0.05,n-k);
+
+print;
+
+print ("(d) 10% Confidence Interval for Beta2", u, l);
+
+x0=Age~Dm~Inc~Inc_sq;
+xx=Age~Dm~Inc~Inc_sq;
+
+j=1;
+
+Do until j>k-1;
+    x0=x0~xx[.,j].*xx[.,j:k-1];
+    j=j+1;
+endo;
+
+x0=ones(n,1)~x0;
+
+y0=res^2;
+    
+y0hat=x0*invpd(x0'x0)*(x0'y0);
+
+ssr0=y0hat'y0hat-n*meanc(y0hat)^2;
+sst0=y0'y0-n*meanc(y0)^2;
+r02=(sst0-ssr0)/sst0;
+s_w=n*r02;
+cr=cdfchii(1-0.05,cols(x0)-2);
+print;
+print ("(e) White's statistic: ",s_w);
+print ("Chi-Sq Critical Value: ",cr);
+print;
+
+w = res^2./meanc(res^2);
+s_bp = (w - 1)'x*invpd(x'x)*x'(w - 1)/((w - 1)'(w - 1)/n);
+cr=cdfchii(1-0.05,cols(x)-1);
+
+print ("Breusch-Pagan statistic: ",s_bp);
+print ("Chi-Sq Critical Value: ",cr);
+print;
+
+
+
+s2hat=zeros(n,n);
+for i(1,n,1);
+    s2hat[i,i]=res[i]^2;
+endfor;
+s2hat=x's2hat*x;
+covmat=(n/(n-k))*invpd(x'x)*s2hat*invpd(x'x);
+stder=sqrt(diag(covmat));
+tval=bhat./stder;
+pval=2*cdftc(abs(tval),n-k);
+yhat=x*bhat;
+res=Q-yhat;
+ssr=yhat'yhat-n*meanc(yhat)^2;
+sst=Q'Q-n*meanc(Q)^2;
+r2=ssr/sst;
+adjR2=1-(1-r2)*((n-1)/(n-k));
+name = 0 $+ "Beta" $+ ftocv(seqa(1,1,cols(x)),1,0);
+result = name~bhat~stder~tval~pval;
+
+"(f)            OLS ESTIMATION WITH ROBUST STANDARD ERRORS";
+" -------------------------------------------------------------------------";
+"           PARAMETER    ESTIMATE       S.E.     T-RATIO        P-value";
+" -------------------------------------------------------------------------";
+call printfm(result,0~ones(1,4),"s"~17~8|"lf"~14~4|"lf"~12~4|"lf"~12~4|"lf"~14~4);
+" -------------------------------------------------------------------------";
+format /rd 9,4;
+"                     ADJ. R SQUARE " adjR2;
+" -------------------------------------------------------------------------";
