@@ -113,6 +113,7 @@ summ
 rm(list=ls())
 
 ##Problem-2
+##a
 dat1<-read.csv("jtrain1.csv",header=T)
 names(dat1)[1]<-"year"
 dat<-dat1[,c("year","hrsemp","grant","fcode")]
@@ -221,3 +222,59 @@ y<-data[,"hrsemp"]
 alpha3<-solve(t(x)%*%x)%*%(t(x)%*%y)
 alpha3[1]
 
+################
+rm(list=ls())
+
+##Problem-2
+##b
+dat1<-read.csv("jtrain1.csv",header=T)
+names(dat1)[1]<-"year"
+dat<-dat1[,c("year","hrsemp","grant","fcode")]
+names(dat)<-c("year","hrsemp","grant","fcode")
+data<-na.omit(dat)
+head(data)
+
+##(i)
+yr_88<-c()
+for (i in 1:dim(data)[1]){
+  if (data[i,"year"]==1988) {yr_88[i]=1}
+  else {yr_88[i]=0}
+}
+data$yr_88<-yr_88
+
+yr_89<-c()
+for (i in 1:dim(data)[1]){
+  if (data[i,"year"]==1989) {yr_89[i]=1}
+  else {yr_89[i]=0}
+}
+data$yr_89<-yr_89
+
+yr<-as.matrix(cbind(yr_88,yr_89))
+
+dum<-rep(0,dim(data)[1])
+for(i in 1:dim(data)[1]){
+  if (data[i,"grant"]==1){
+    f<-data[i,"fcode"]
+    for (j in 1:dim(data)[1]){
+      if (data[j,"fcode"]==f){
+        dum[j]<-1
+      }
+      }
+  }
+}
+
+
+fstt<-dum*yr
+x<-cbind(rep(1,dim(data)[1]),data[,"grant"],fstt[,1:2],yr_88,dum)
+y<-data[,"hrsemp"]
+beta<-solve(t(x)%*%x)%*%(t(x)%*%y)
+
+##(ii)
+xr<-cbind(rep(1,dim(data)[1]),yr_88)
+yd<-data[,"grant"]
+yin<-data[,"hrsemp"]
+beta.d<-solve(t(xr)%*%xr)%*%(t(xr)%*%yd)
+beta.in<-solve(t(xr)%*%xr)%*%(t(xr)%*%yin)
+res.d<-yd-xr%*%beta.d
+res.in<-yin-xr%*%beta.in
+beta_r<-solve(t(res.d)%*%res.d)%*%(t(res.d)%*%yin)
