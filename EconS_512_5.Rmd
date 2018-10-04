@@ -1,16 +1,36 @@
-##Problem-1
+---
+title: "EconS 512"
+author: 'Golam Saroare Shakil # 011577991'
+date: "October 2, 2018"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Problem 1
+
+
+```{r warning=FALSE, message=FALSE}
 ##a
 library(plm)
 data(Gasoline)
 dat<-Gasoline
-head(dat)
 data<-dat[,c("country","year","lgaspcar","lrpmg")]
 mod<-plm(data[,"lgaspcar"]~data[,"lrpmg"],data=data,method="within")
 sum1<-summary(mod,robust=T)$coefficients
 sum1<-t(as.matrix(c(sum1,summary(mod,vcov=vcovHC)$coefficients[2:4])))
-colnames(sum1)<-c("Par.Est","Rob_StD.Err","t-value","p-value","Clstrd.StD.Err","Clstrd.t-value","Clstrd.p-value")
+colnames(sum1)<-c("Par.Est","Rob_StD.Err","t-value","p-value",
+                  "Clstrd.StD.Err","Clstrd.t-value","Clstrd.p-value")
 sum1
+```
+I'm using the R library "plm" and bultin dataset "gasoline" of this library. My dependent variable natural logarithm of motor gasoline consumption per car and my independent variable is logarithm of real motor gasoline price. One thing to notice is that, the package does't return a general robust standard error. It returns either clustered robust or non-robust standar errors. The results are shown in the table above.
 
+```{r warning=FALSE, message=FALSE}
 ##b
 
 m<-matrix(0,nrow=length(data[,"country"]),ncol=nlevels(data[,"country"]))
@@ -22,8 +42,6 @@ for (j in 1:nlevels(data[,"country"])){
 y<-data[,"lgaspcar"]
 ybar<-(t(y)%*%m)/apply(m,2,sum)
 xbar<-(t(data[,"lrpmg"])%*%m)/apply(m,2,sum)
-
-
 y.tld<-c()
 for (i in 1:length(y)){
   for (j in 1:length(ybar)){
@@ -31,22 +49,18 @@ for (i in 1:length(y)){
     if (data[i,"country"]==levels(data[,"country"])[j]) y.tld[i]<-ybar[j]
   }
 }
-
 x.tld<-c()
 for (i in 1:length(y)){
   for (j in 1:length(xbar)){
     if(data[i,"country"]==levels(data[,"country"])[j])x.tld[i]<-xbar[j]
   }
 }
-
 X<-data[,"lrpmg"]-x.tld
 Y<-y-y.tld
-
 beta2<-solve(t(X)%*%X)%*%t(X)%*%Y
 res<-Y-X%*%beta2
 sig<-matrix(0,nrow=length(data[,"country"]),ncol=length(data[,"country"]))
 diag(sig)<-res*res
-
 sig.c<-matrix(0,nrow=length(data[,"country"]),ncol=length(data[,"country"]))
 n<-c()
 r<-0
@@ -59,7 +73,6 @@ for (k in 1:nlevels(data[,"country"])){
   }
   r=r+n[k]
 }
-
 cov<-(length(Y)/(length(Y)-1))*solve(t(X)%*%X)%*%t(X)%*%sig%*%X%*%solve(t(X)%*%X)
 cov.c<-(length(Y)/(length(Y)-1))*solve(t(X)%*%X)%*%t(X)%*%sig.c%*%X%*%solve(t(X)%*%X)
 stder<-sqrt(diag(cov))
@@ -69,10 +82,15 @@ t.stat.c<-beta2/stder.c
 p.val<-2*pt(-abs(t.stat),length(data[,"country"])-length(beta2))
 p.val.c<-2*pt(-abs(t.stat.c),length(data[,"country"])-length(beta2))
 sum2<-data.frame(cbind(beta2,stder,t.stat,p.val,stder.c,t.stat.c,p.val.c))
-colnames(sum2)<-c("Par.Est","Rob_StD.Err","t-value","p-value","Clstrd.StD.Err","Clstrd.t-value","Clstrd.p-value")
+colnames(sum2)<-c("Par.Est","Rob_StD.Err","t-value","p-value",
+                  "Clstrd.StD.Err","Clstrd.t-value","Clstrd.p-value")
 rownames(sum2)<-"lgaspcar"
 sum2
+```
+I created the matrix of dummy variables `m' where each column is a separate dummy variable for each country. Multiplying this matrix with my dependent variable yields country totals and hence country means. This allowed me to do literal fixed effect regression. For the robust covariance matrix, I've used the White's robust estimator methods. For the clustered robust case I assumed that the errors are correlated within country but independent between countries. The results are illustrated above. 
 
+
+```{r warning=FALSE, message=FALSE}
 ##c
 x<-as.matrix(cbind(data[,"lrpmg"],m))
 beta1<-solve(t(x)%*%x)%*%(t(x)%*%y)
@@ -101,33 +119,36 @@ t.stat.c<-beta1/stder.c
 p.val<-2*pt(-abs(t.stat),length(data[,"country"])-length(beta1))
 p.val.c<-2*pt(-abs(t.stat.c),length(data[,"country"])-length(beta1))
 sum3<-data.frame(cbind(beta1,stder,t.stat,p.val,stder.c,t.stat.c,p.val.c))
-colnames(sum3)<-c("Par.Est","Rob_StD.Err","t-value","p-value","Clstrd.StD.Err","Clstrd.t-value","Clstrd.p-value")
+colnames(sum3)<-c("Par.Est","Rob_StD.Err","t-value","p-value",
+                  "Clstrd.StD.Err","Clstrd.t-value","Clstrd.p-value")
 rownames(sum3)<-c("lgaspcar",levels(data[,"country"]))
 sum3[1,]
+```
+Here, I've used the dummy variables that I created in (b) directly into the model.I used similar methodologies to (b) for calculating the standard errors. Results for only the parameter of interest is shown.
 
+```{r warning=FALSE, message=FALSE}
 summ<-data.frame(rbind(sum1,sum2,sum3[1,]))
 rownames(summ)<-c("Canned Package","Literal F-E","Reg w/ Dummy")
 summ
+```
+This table displays results from different estimation methods at a glance. We can see that the parameter estimates are equal for all the cases. However, the standard error returned by the canned package is not the robust standard error which I calculated with my own functions for (b) and (c). The clustered standard errors are pretty close for "plm" package and the literal fixed effect estimation. However, in case of regression with dummies, the clustered S.E increases a little bit which is normal since there are significantly more parameters to estimate due to dummies.
 
+## Problem 2
+
+```{r warning=FALSE, message=FALSE}
 ################
 rm(list=ls())
-
-##Problem-2
 ##a
 dat1<-read.csv("jtrain1.csv",header=T)
 names(dat1)[1]<-"year"
 dat<-dat1[,c("year","hrsemp","grant","fcode")]
 names(dat)<-c("year","hrsemp","grant","fcode")
 dat<-na.omit(dat)
-head(dat)
-table(dat[,"year"])
 for (i in 1:dim(dat)[1]){
 if (dat[i,"year"]==1989) dat[i,]<-NA
 }
 data<-na.omit(dat)
-head(data)
 n<-dim(data)[1]
-
 y11<-0
 n11<-0
 y10<-0
@@ -143,13 +164,10 @@ for(i in 1:n){
       n10<-n10+1
     }
       }
-
 }
 }
-
 y11.bar<-y11/n11
 y10.bar<-y10/n10
-
 y00<-0
 n00<-0
 y01<-0
@@ -167,13 +185,9 @@ if (data[i,"year"]==1988 & data[i,"grant"]==0){
     }
   }
       }
-
 y00.bar<-y00/n00
 y01.bar<-y01/n01
-
 alpha1<-(y11.bar-y10.bar)-(y01.bar-y00.bar)
-alpha1
-
 ##(ii)
 Ei<-rep(0,length(data[,"grant"]))
 for (i in 1:dim(data)[1]){
@@ -186,19 +200,15 @@ if (data[i,"grant"]==1) {
 }
 
 data$Ei<-Ei
-
 yr_88<-c()
 for (i in 1:dim(data)[1]){
 if (data[i,"year"]==1988) {yr_88[i]=1}
 else {yr_88[i]=0}
 }
 data$yr_88<-yr_88
-
 x<-as.matrix(cbind(rep(1,dim(data)[1]),data[,"grant"],data[,"yr_88"],data[,"Ei"]))
 y<-data[,"hrsemp"]
 alpha2<-solve(t(x)%*%x)%*%(t(x)%*%y)
-alpha2
-
 ##(iii)
 fac<-c()
 fac[1]<-data[1,"fcode"]
@@ -209,30 +219,33 @@ for (i in 2:dim(data)[1]){
   }
 }
 fac<-na.omit(fac)
-
 dum<-matrix(0,nrow=dim(data)[1],ncol=length(fac))
 for (j in 1:length(fac)){
 for (i in 1:dim(data)[1]){
 if(data[i,"fcode"]==fac[j])dum[i,j]<-1
 }
 }
-
 x<-as.matrix(cbind(data[,"grant"],data[,"yr_88"],dum))
 y<-data[,"hrsemp"]
 alpha3<-solve(t(x)%*%x)%*%(t(x)%*%y)
-alpha3[1]
+summ<-data.frame(cbind(alpha1,alpha2[2],alpha3[1]))
+rownames(summ)<-"alpha"
+colnames(summ)<-c("Diff-diff","W/ Dummy", "FE reg")
+summ
+```
+As we can see that the results are almost exactly the same. It is because in each of the cases we used the same procedure theoretically, i.e. separating the effects of year and individual from the treatment effect. However, there are some fractional differences due to the rounding error. 
 
+
+```{r warning=FALSE, message=FALSE}
 ################
 rm(list=ls())
 
-##Problem-2
 ##b
 dat1<-read.csv("jtrain1.csv",header=T)
 names(dat1)[1]<-"year"
 dat<-dat1[,c("year","hrsemp","grant","fcode")]
 names(dat)<-c("year","hrsemp","grant","fcode")
 data<-na.omit(dat)
-head(data)
 
 ##(i)
 yr_88<-c()
@@ -248,9 +261,7 @@ for (i in 1:dim(data)[1]){
   else {yr_89[i]=0}
 }
 data$yr_89<-yr_89
-
 yr<-as.matrix(cbind(yr_88,yr_89))
-
 dum<-rep(0,dim(data)[1])
 for(i in 1:dim(data)[1]){
   if (data[i,"grant"]==1){
@@ -262,8 +273,6 @@ for(i in 1:dim(data)[1]){
       }
   }
 }
-
-
 fstt<-dum*yr
 x<-cbind(rep(1,dim(data)[1]),data[,"grant"],fstt[,1:2],yr_88,dum)
 y<-data[,"hrsemp"]
@@ -278,3 +287,9 @@ beta.in<-solve(t(xr)%*%xr)%*%(t(xr)%*%yin)
 res.d<-yd-xr%*%beta.d
 res.in<-yin-xr%*%beta.in
 beta_r<-solve(t(res.d)%*%res.d)%*%(t(res.d)%*%yin)
+summ<-data.frame(cbind(beta[2],beta_r))
+rownames(summ)<-"alpha"
+colnames(summ)<-c("frm-spc trnd","resd reg")
+summ
+```
+Again, we've got equal estimates subject to frcational differences due to rounding error through both the estimates. 
