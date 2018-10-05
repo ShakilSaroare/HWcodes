@@ -248,6 +248,32 @@ names(dat)<-c("year","hrsemp","grant","fcode")
 data<-na.omit(dat)
 
 ##(i)
+fac<-c()
+f<-0
+fac[1]<-data[1,"fcode"]
+for (i in 2:dim(data)[1]){
+  if (data[i,"fcode"]==data[i-1,"fcode"]) f=f+0
+  else {
+    fac[i]<-data[i,"fcode"]
+  }
+}
+fac<-na.omit(fac)
+dum.f<-matrix(0,nrow=dim(data)[1],ncol=length(fac))
+for (j in 1:length(fac)){
+for (i in 1:dim(data)[1]){
+if(data[i,"fcode"]==fac[j])dum.f[i,j]<-1
+}
+}
+
+tt<-c()
+for (i in 1:dim(data)[1]){
+  if (data[i,"year"]==1987)tt[i]<-0
+  else if (data[i,"year"]==1988)tt[i]<-1
+  else tt[i]<-2
+}
+
+fstt<-dum.f*tt
+
 yr_88<-c()
 for (i in 1:dim(data)[1]){
   if (data[i,"year"]==1988) {yr_88[i]=1}
@@ -273,19 +299,29 @@ for(i in 1:dim(data)[1]){
       }
   }
 }
-fstt<-dum*yr
-x<-cbind(rep(1,dim(data)[1]),data[,"grant"],fstt[,1:2],yr_88,dum)
+
+x<-cbind(rep(1,dim(data)[1]),data[,"grant"],fstt[,1:135])
 y<-data[,"hrsemp"]
 beta<-solve(t(x)%*%x)%*%(t(x)%*%y)
 
+
+####Codes following this is needed to work on###########
+
 ##(ii)
-xr<-cbind(rep(1,dim(data)[1]),yr_88)
+res.d<-c()
+res.in<-c()
+xr<-cbind(rep(1,dim(data)[1]),tt)
 yd<-data[,"grant"]
 yin<-data[,"hrsemp"]
-beta.d<-solve(t(xr)%*%xr)%*%(t(xr)%*%yd)
-beta.in<-solve(t(xr)%*%xr)%*%(t(xr)%*%yin)
-res.d<-yd-xr%*%beta.d
-res.in<-yin-xr%*%beta.in
+y.temp.d<-yd*dum.f[,1]
+y.temp.in<-yin*dum.f[,1]
+xr.temp<-xr*dum.f[,1]
+beta.d<-solve(t(xr.temp)%*%xr.temp)%*%(t(xr.temp)%*%y.temp.d)
+beta.in<-solve(t(xr.temp)%*%xr.temp)%*%(t(xr.temp)%*%y.temp.in)
+res.d[1:length(which(data[,"fcode"]==fac[1]))]<-y.temp.d-xr.temp%*%beta.d
+res.in[1:length(which(data[,"fcode"]==fac[1]))]<-y.temp.in-xr.temp%*%beta.in
+#######This Part of the code needs attention in future#########
+
 beta_r<-solve(t(res.d)%*%res.d)%*%(t(res.d)%*%yin)
 summ<-data.frame(cbind(beta[2],beta_r))
 rownames(summ)<-"alpha"
